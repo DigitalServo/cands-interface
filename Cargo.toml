@@ -1,0 +1,9 @@
+[package]
+name = "cands_interface"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-io = "2.3.1"
+futures-lite = "2.2.0"
+ftdi-embedded-hal = {version= "0.22.0", features = ["libftd2xx", "libftd2xx-static"]}

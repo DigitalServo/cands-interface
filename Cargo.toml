@@ -3,10 +3,15 @@ name = "cands_interface"
 license = "MIT"
 authors = ["DigitalServo"]
 description = "This is an interface for DigitalServo USB CAN board."
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+
+[features]
+usb-ftdi = ["ftdi-embedded-hal"]
+raspberrypi = ["rppal"]
 
 [dependencies]
 async-io = "2.3.1"
 futures-lite = "2.2.0"
-ftdi-embedded-hal = {version= "0.22.0", features = ["libftd2xx", "libftd2xx-static"]}
+ftdi-embedded-hal = {version= "0.22.0", features = ["libftd2xx", "libftd2xx-static"], optional = true}
+rppal = {version = "0.18.0", optional = true}

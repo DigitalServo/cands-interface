@@ -26,6 +26,7 @@ use std::error::Error as StdError;
 use std::io::{ Error as IoError, ErrorKind as IoErrorKind};
 use ftdi_embedded_hal::Error as FtdiError;
 
+#[allow(dead_code)]
 pub fn list_devices() -> Result<Vec<DeviceInfo>, Box<dyn StdError>> {
     match list_ftdi_devices() {
         Ok(list) => Ok(list),

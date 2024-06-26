@@ -112,22 +112,28 @@ impl  RaspiIF {
         ret
     }
 
+    #[allow(dead_code)]
     pub fn spi_read(&mut self, buffer: &mut [u8]) -> rppal::spi::Result<usize> {
         self.spi.read(buffer)
     } 
 
+    #[allow(dead_code)]
     pub fn spi_write(&mut self, buffer: &[u8]) -> rppal::spi::Result<usize> {
         self.spi.write(buffer)
     } 
 
+    #[allow(dead_code)]
     pub fn spi_transfer(&mut self, rx_buffer: &mut [u8], tx_buffer: &[u8]) -> rppal::spi::Result<usize> {
         self.spi.transfer(rx_buffer, tx_buffer)
     }
 
+    #[allow(dead_code)]
     pub fn spi_transfer_in_place(&mut self, data: &mut [u8]) -> rppal::spi::Result<()> {
         let mut rx_buffer: [u8; 512] = [0u8; 512];
-        let size = self.spi.transfer(&mut rx_buffer, data)?;
-        data = &rx_buffer[..size];
+        let size: usize = self.spi.transfer(&mut rx_buffer, data)?;
+        for i in 0..size {
+            data[i] = rx_buffer[i];
+        }
         Ok(())
 
     }

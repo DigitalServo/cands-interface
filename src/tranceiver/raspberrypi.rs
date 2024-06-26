@@ -20,9 +20,6 @@ use crate::rx_buffer::RxData;
 use crate::driver::raspberrypi::{RaspiIF, GPIO_INPUT_PIN_NUM};
 
 #[cfg(feature="raspberrypi")]
-const BUFSIZE: usize = 512;
-
-#[cfg(feature="raspberrypi")]
 impl super::TCAN455xTranceiver {
     pub fn new () -> Result<Self, Box<dyn std::error::Error>> {
         
@@ -31,10 +28,7 @@ impl super::TCAN455xTranceiver {
             Err(e) => return Err(e)
         };
 
-        Ok(Self {
-            driver,
-            rx_buf: [0; BUFSIZE]
-        })
+        Ok(Self { driver })
     }
 
 

@@ -8,3 +8,6 @@ pub use tranceiver::usb_ftdi::TCAN455xTranceiver;
 
 #[cfg(feature="raspberrypi")]
 pub use tranceiver::raspberrypi::TCAN455xTranceiver;
+
+/// Receive data buffer on user space
+pub use rx_buffer::RxData;

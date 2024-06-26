@@ -11,7 +11,7 @@ use crate::tcan4550::{
 
 use crate::rx_buffer::RxData;
 
-use crate::driver::raspberrypi::RaspiIF;
+use crate::driver::raspberrypi::{RaspiIF, GPIO_INPUT_PIN_NUM};
 
 const BUFSIZE: usize = 512;
 

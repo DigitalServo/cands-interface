@@ -1,7 +1,11 @@
+#[cfg(feature="raspberrypi")]
 use std::{io, time::Duration};
+#[cfg(feature="raspberrypi")]
 use futures_lite::FutureExt;
+#[cfg(feature="raspberrypi")]
 use async_io::{block_on, Timer};
 
+#[cfg(feature="raspberrypi")]
 use crate::tcan4550::{
     filter::{SIDFCONFIG, XIDFCONFIG},
     register::*,
@@ -9,18 +13,17 @@ use crate::tcan4550::{
     request::TCAN455xRequest,
 };
 
+#[cfg(feature="raspberrypi")]
 use crate::rx_buffer::RxData;
 
+#[cfg(feature="raspberrypi")]
 use crate::driver::raspberrypi::{RaspiIF, GPIO_INPUT_PIN_NUM};
 
+#[cfg(feature="raspberrypi")]
 const BUFSIZE: usize = 512;
 
-pub struct TCAN455xTranceiver {
-    driver: RaspiIF,
-    rx_buf: [u8; BUFSIZE],
-}
-
-impl TCAN455xTranceiver {
+#[cfg(feature="raspberrypi")]
+impl super::TCAN455xTranceiver {
     pub fn new () -> Result<Self, Box<dyn std::error::Error>> {
         
         let driver = match RaspiIF::new() {
@@ -51,18 +54,40 @@ impl TCAN455xTranceiver {
         }
     }
 
-    pub fn read(&mut self, addr: u16, len: u8) -> io::Result<usize> {
-        let req: Vec<u8> = TCAN455xRequest::get_read_command(addr, len);
-        match self.driver.spi_transfer(&mut self.rx_buf, &req) {
-            Ok(size) => Ok(size),
+    // pub fn read(&mut self, addr: u16, len: u8) -> io::Result<usize> {
+    //     let req: Vec<u8> = TCAN455xRequest::get_read_command(addr, len);
+    //     match self.driver.spi_transfer(&mut self.rx_buf, &req) {
+    //         Ok(size) => Ok(size),
+    //         Err(_) => Err(io::ErrorKind::ConnectionRefused.into())
+    //     }
+    // }
+
+    pub fn read(&mut self, addr: u16, len: u8) -> io::Result<Vec<u8>> {
+        let mut req: Vec<u8> = TCAN455xRequest::get_read_command(addr, len);
+        match self.driver.spi_transfer_in_place(&mut req) {
+            Ok(_) => Ok(req),
             Err(_) => Err(io::ErrorKind::ConnectionRefused.into())
         }
     }
 
+    // pub fn read_bytes(&mut self, addr: u16, len: u8) -> io::Result<Vec<u8>> {
+    //     match self.read(addr, len) {
+    //         Ok(size) => {
+    //             let v = self.rx_buf[4..size]
+    //                 .chunks(4)
+    //                 .map(|x| vec![x[3], x[2], x[1], x[0]])
+    //                 .flatten()
+    //                 .collect();
+    //             Ok(v)
+    //         },
+    //         Err(_) => Err(io::ErrorKind::InvalidData.into())
+    //     }
+    // }
+
     pub fn read_bytes(&mut self, addr: u16, len: u8) -> io::Result<Vec<u8>> {
         match self.read(addr, len) {
-            Ok(size) => {
-                let v = self.rx_buf[4..size]
+            Ok(ret) => {
+                let v = ret[4..]
                     .chunks(4)
                     .map(|x| vec![x[3], x[2], x[1], x[0]])
                     .flatten()
@@ -73,10 +98,23 @@ impl TCAN455xTranceiver {
         }
     }
 
+    // pub fn read_device(&mut self, addr: u16) -> io::Result<u32> {
+    //     let status: u32 = match self.read(addr, 1) {
+    //         Ok(size) => {
+    //             match &self.rx_buf[4..size].try_into() {
+    //                 Ok(x) => u32::from_be_bytes(*x),
+    //                 Err(_) => return Err(io::ErrorKind::InvalidData.into())
+    //             }
+    //         },
+    //         Err(_) => return Err(io::ErrorKind::InvalidData.into())
+    //     };
+    //     Ok(status)
+    // }
+
     pub fn read_device(&mut self, addr: u16) -> io::Result<u32> {
         let status: u32 = match self.read(addr, 1) {
-            Ok(size) => {
-                match &self.rx_buf[4..size].try_into() {
+            Ok(ret) => {
+                match &ret[4..].try_into() {
                     Ok(x) => u32::from_be_bytes(*x),
                     Err(_) => return Err(io::ErrorKind::InvalidData.into())
                 }
@@ -85,7 +123,7 @@ impl TCAN455xTranceiver {
         };
         Ok(status)
     }
-
+    
     pub fn setup(&mut self, sidf: &[SIDFCONFIG], xidf: &[XIDFCONFIG]) -> Result<(), String>{
 
         Self::reset(self);

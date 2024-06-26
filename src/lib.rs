@@ -3,11 +3,8 @@ pub mod tcan4550;
 mod tranceiver;
 mod rx_buffer;
 
-#[cfg(feature="usb-ftdi")]
-pub use tranceiver::usb_ftdi::TCAN455xTranceiver;
-
-#[cfg(feature="raspberrypi")]
-pub use tranceiver::raspberrypi::TCAN455xTranceiver;
+/// CAN Tranceiver
+pub use tranceiver::TCAN455xTranceiver;
 
 /// Receive data buffer on user space
 pub use rx_buffer::RxData;

@@ -124,4 +124,11 @@ impl  RaspiIF {
         self.spi.transfer(rx_buffer, tx_buffer)
     }
 
+    pub fn spi_transfer_in_place(&mut self, data: &mut [u8]) -> rppal::spi::Result<()> {
+        let mut rx_buffer: [u8; 512] = [0u8; 512];
+        let size = self.spi.transfer(&mut rx_buffer, data)?;
+        data = &rx_buffer[..size];
+        Ok(())
+
+    }
 }

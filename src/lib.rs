@@ -1,5 +1,5 @@
-mod driver;
 pub mod tcan4550;
+mod device_driver;
 mod tranceiver;
 mod rx_buffer;
 

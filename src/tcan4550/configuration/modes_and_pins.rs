@@ -19,7 +19,7 @@ const DEVICE_RESET: u32 = 0;     // Action at software reset, 0: Current configu
 const SWE_DIS: u32 = 0;          // Keep Sleep Wake Error Enabled (it's a disable bit, not an enable)
 const TESTMODE_CONFIG: u32 = 0;  // Test mode, 0: PHY test, 1: CAN controller test
 
-impl crate::tcan4550::request::TCAN455xRequest {
+impl crate::rcan4550_controller::request::TCAN455xRequest {
     pub fn set_device_modes_and_pins() -> Vec<u8> {
     let addr: u16 = REG_DEV_MODES_AND_PINS;
     let data: u32 = (WAKE_CONFIG << 30)

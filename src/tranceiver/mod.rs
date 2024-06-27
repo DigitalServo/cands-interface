@@ -1,4 +1,7 @@
+#[cfg(feature="usb-ftdi")]
 pub mod usb_ftdi;
+
+#[cfg(feature="raspberrypi")]
 pub mod raspberrypi;
 
 use std::{io, time::Duration};
@@ -6,7 +9,7 @@ use futures_lite::FutureExt;
 use async_io::{block_on, Timer};
 
 use crate::{
-    driver::TCAN4550Driver,
+    device_driver::TCAN4550Driver,
     tcan4550::{
         configuration::mram::*,
         filter::{SIDFCONFIG, XIDFCONFIG},

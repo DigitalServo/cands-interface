@@ -7,7 +7,7 @@ pub mod raspberrypi;
 use std::io::Error as IoError;
 type IoResult<T> = Result<T, IoError>;
 
-pub const GPI_MAX_POINT: usize = 256;
+pub const GPI_MAX_POINT: usize = 64;
 
 #[allow(dead_code)]
 pub(crate) trait SpiDriver {

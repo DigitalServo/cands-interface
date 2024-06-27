@@ -74,7 +74,7 @@ const MCANIRQ_RF0NE: u32 = 1; //IE[0] RF0NE: Rx FIFO 0 get_write_command message
 const MCANIRQ_INT1_EN: u32 = 1;
 const MCANIRQ_INT0_EN: u32 = 1;
   
-impl crate::tcan4550::request::TCAN455xRequest {
+impl crate::rcan4550_controller::request::TCAN455xRequest {
     pub fn protect_register(data: u32) -> u32 {
         data & !(REG_BITS_MCAN_CCCR_CSA | REG_BITS_MCAN_CCCR_CSR | REG_BITS_MCAN_CCCR_INIT | REG_BITS_MCAN_CCCR_CCE)
     }

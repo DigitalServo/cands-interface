@@ -1,6 +1,15 @@
 use rppal::gpio::{Gpio, InputPin, OutputPin};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
 
+//Error handling
+use std::error::Error as StdError;
+use std::io::{Error as IoError, ErrorKind as IoErrorKind};
+use rppal::spi::Error as RaspiError;
+
+type IoResult<T> = Result<T, IoError>;
+
+use super::{GpioDriver, SpiDriver};
+
 const GPIO_RESET_PIN_BCM: u8 = 5;
 
 pub const GPIO_INPUT_PIN_NUM: usize = 8;
@@ -19,7 +28,7 @@ pub struct RaspiIF {
 
 impl  RaspiIF {
     
-    pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new() -> Result<Self, Box<dyn stdError>> {
 
         let gpio: Gpio = match Gpio::new() {
             Ok(x) => x,
@@ -92,49 +101,45 @@ impl  RaspiIF {
 
         Ok(Self { spi, reset_pin, input_pins })
     }
+}
 
-    pub fn reset_tcan455x(&mut self) {
-        self.reset_pin.set_high();
-        std::thread::sleep(std::time::Duration::from_millis(100));
-        self.reset_pin.set_low();
-        std::thread::sleep(std::time::Duration::from_millis(100));
-    }
-
-    pub fn gpi_read(&mut self, channel: usize) -> bool {
-        self.input_pins[channel].is_high()
-    }
-
-    pub fn gpi_read_all(&mut self) -> [bool; GPIO_INPUT_PIN_NUM] {
-        let mut ret: [bool; GPIO_INPUT_PIN_NUM] = [false; GPIO_INPUT_PIN_NUM];
-        for i in 0..GPIO_INPUT_PIN_NUM {
-            ret[i] = self.input_pins[i].is_high();
-        }
-        ret
-    }
-
-    #[allow(dead_code)]
-    pub fn spi_read(&mut self, buffer: &mut [u8]) -> rppal::spi::Result<usize> {
+impl SpiDriver for RaspiIF {
+    fn spi_read(&mut self, buffer: &mut [u8]) -> rppal::spi::Result<usize> {
         self.spi.read(buffer)
     } 
 
-    #[allow(dead_code)]
-    pub fn spi_write(&mut self, buffer: &[u8]) -> rppal::spi::Result<usize> {
+    fn spi_write(&mut self, buffer: &[u8]) -> rppal::spi::Result<usize> {
         self.spi.write(buffer)
     } 
 
-    #[allow(dead_code)]
-    pub fn spi_transfer(&mut self, rx_buffer: &mut [u8], tx_buffer: &[u8]) -> rppal::spi::Result<usize> {
+    fn spi_transfer(&mut self, rx_buffer: &mut [u8], tx_buffer: &[u8]) -> rppal::spi::Result<usize> {
         self.spi.transfer(rx_buffer, tx_buffer)
     }
 
-    #[allow(dead_code)]
-    pub fn spi_transfer_in_place(&mut self, data: &mut [u8]) -> rppal::spi::Result<()> {
+    fn spi_transfer_in_place(&mut self, data: &mut [u8]) -> rppal::spi::Result<usize> {
         let mut rx_buffer: [u8; 512] = [0u8; 512];
         let size: usize = self.spi.transfer(&mut rx_buffer, data)?;
         for i in 0..size {
             data[i] = rx_buffer[i];
         }
-        Ok(())
+        Ok(size)
+    }
+}
 
+impl GpioDriver for RaspiIF {
+    fn gpio_out(&mut self, channel: usize) -> IoResult<()> {
+        Ok(())
+    }
+
+    fn gpio_read(&mut self, channel: usize) -> IoResult<bool> {
+        Ok(self.input_pins[channel].is_high())
+    }
+
+    fn gpio_read_all(&mut self) -> IoResult<Vec<bool>> {
+        let mut ret: [bool; GPIO_INPUT_PIN_NUM] = [false; GPIO_INPUT_PIN_NUM];
+        for i in 0..GPIO_INPUT_PIN_NUM {
+            ret[i] = self.input_pins[i].is_high();
+        }
+        Ok(Vec::from(ret))
     }
 }

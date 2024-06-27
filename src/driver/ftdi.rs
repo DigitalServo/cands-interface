@@ -33,7 +33,7 @@ fn emap<E: StdError>() -> impl FnOnce(FtdiError<E>) -> IoError { |err| match err
     FtdiError::Backend(e) => IoError::new(IoErrorKind::Other, e.to_string()),
 } }
 
-use super::{GpioDriver, SpiDriver, TCAN4550Driver};
+use super::{GpioDriver, SpiDriver, TCAN4550Driver, GPI_MAX_POINT};
 
 pub struct FtdiDriver<DEVICE, E>
 where
@@ -51,6 +51,7 @@ where
     E: StdError,
     FtdiError<E>: From<E>,
 {
+    #[allow(dead_code)]
     pub fn list_devices() -> Result<Vec<DeviceInfo>, Box<dyn StdError>> {
         match list_ftdi_devices() {
             Ok(list) => Ok(list),
@@ -139,8 +140,9 @@ where
         Ok(false)
     }
 
-    fn gpio_read_all(&mut self) -> IoResult<Vec<bool>> {
-        Ok(vec![])
+    fn gpio_read_all(&mut self) -> IoResult<[bool; GPI_MAX_POINT]> {
+        let ret: [bool; GPI_MAX_POINT] = [false; GPI_MAX_POINT];
+        Ok(ret)
     }
 }
 

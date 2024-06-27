@@ -1,4 +1,3 @@
-pub mod filter;
+pub mod id_filter;
 pub mod register;
-pub mod request;
-pub mod configuration;
+pub mod controller;

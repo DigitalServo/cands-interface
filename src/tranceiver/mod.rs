@@ -11,15 +11,15 @@ use async_io::{block_on, Timer};
 use crate::{
     device_driver::TCAN4550Driver,
     tcan4550::{
-        configuration::mram::*,
-        filter::{SIDFCONFIG, XIDFCONFIG},
         register::*,
-        request::TCAN455xRequest
+        controller::{TCAN455xController, configurator::mram::*},
+        id_filter::{SIDConfig, XIDConfig},
     }
 };
 
 use crate::rx_buffer::RxData;
 
+/// CAN Tranceiver
 pub struct TCAN455xTranceiver {
     driver: Box<dyn TCAN4550Driver>
 }
@@ -34,7 +34,7 @@ impl TCAN455xTranceiver {
     }
 
     pub fn read(&mut self, addr: u16, len: u8) -> io::Result<Vec<u8>> {
-        let mut req: Vec<u8> = TCAN455xRequest::get_read_command(addr, len);
+        let mut req: Vec<u8> = TCAN455xController::generate_read_command(addr, len);
         match self.driver.spi_transfer_in_place(&mut req) {
             Ok(_) => Ok(req),
             Err(_) => Err(io::ErrorKind::ConnectionRefused.into())
@@ -72,7 +72,7 @@ impl TCAN455xTranceiver {
         self.driver.reset_tcan4550().map_err(|e| e.into())
     }
     
-    pub fn setup(&mut self, sidf: &[SIDFCONFIG], xidf: &[XIDFCONFIG]) -> Result<(), String>{
+    pub fn setup(&mut self, sidf: &[SIDConfig], xidf: &[XIDConfig]) -> Result<(), String>{
 
         Self::reset(self).expect("Cannot reset TCAN4550");
 
@@ -166,7 +166,7 @@ impl TCAN455xTranceiver {
 
     pub fn clear_spi_error(&mut self) -> io::Result<()> {
         let fut = async {
-            let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_SPI_STATUS, vec![0xFFFFFFFF]);
+            let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_SPI_STATUS, vec![0xFFFFFFFF]);
             self.write(&cmd)?;
             Ok(())
         };
@@ -175,7 +175,7 @@ impl TCAN455xTranceiver {
 
     pub fn clear_device_irq_flags(&mut self, dev_ir: u32) -> io::Result<()> {
         let fut = async {
-            let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_DEV_IR, vec![dev_ir]);
+            let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_DEV_IR, vec![dev_ir]);
             self.write(&cmd)?;
             Ok(())
         };
@@ -184,7 +184,7 @@ impl TCAN455xTranceiver {
 
     pub fn clear_mcan_irq_flags(&mut self) -> io::Result<()> {
         let fut = async {
-            let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_MCAN_IR, vec![0xFFFFFFFF]);
+            let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_MCAN_IR, vec![0xFFFFFFFF]);
             self.write(&cmd)?;
             Ok(())
         };
@@ -195,7 +195,7 @@ impl TCAN455xTranceiver {
         let fut = async {
             const MRAM_SIZE: u16 = 2048;
             for addr in (REG_MRAM..(REG_MRAM + MRAM_SIZE)).step_by(4) {
-                let cmd: Vec<u8> = TCAN455xRequest::get_write_command(addr, vec![0]);
+                let cmd: Vec<u8> = TCAN455xController::generate_write_command(addr, vec![0]);
                 self.write(&cmd)?;
             }
             Ok(())
@@ -209,8 +209,8 @@ impl TCAN455xTranceiver {
                 Ok(val) => val,
                 Err(_) => return Err(io::ErrorKind::InvalidData.into())
             };
-            let cce: u32 = TCAN455xRequest::unprotect_register(ccr);
-            let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_MCAN_CCCR, vec![cce]);
+            let cce: u32 = TCAN455xController::unprotect_register(ccr);
+            let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_MCAN_CCCR, vec![cce]);
             self.write(&cmd)?;
             Ok(())
         };
@@ -223,8 +223,8 @@ impl TCAN455xTranceiver {
                 Ok(val) => val,
                 Err(_) => return Err(io::ErrorKind::InvalidData.into())
             };
-            let ccd: u32 = TCAN455xRequest::protect_register(ccr);
-            let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_MCAN_CCCR, vec![ccd]);
+            let ccd: u32 = TCAN455xController::protect_register(ccr);
+            let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_MCAN_CCCR, vec![ccd]);
             self.write(&cmd)?;
             Ok(())
         };
@@ -238,7 +238,7 @@ impl TCAN455xTranceiver {
             const RRFS: u32 = 0;   // Reject remote frames (TCAN4x5x doesn't support this)
             const RRFE: u32 = 0;   // Reject remote frames (TCAN4x5x doesn't support this)
             const PAYLOAD: u32 = ((ANFS << 4) | (ANFE << 2) | (RRFS << 1) | (RRFE << 0)) & REG_BITS_MCAN_GFC_MASK;
-            let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_MCAN_GFC, vec![PAYLOAD]);
+            let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_MCAN_GFC, vec![PAYLOAD]);
             self.write(&cmd)?;
             Ok(())
         };
@@ -247,7 +247,7 @@ impl TCAN455xTranceiver {
 
     pub fn configure_mcan_cccr(&mut self) -> io::Result<()> {
         let fut = async {
-            self.write(&TCAN455xRequest::set_mcan_cccr())?;
+            self.write(&TCAN455xController::set_mcan_cccr())?;
             Ok(())
         };
         block_on(fut.or(Self::timeout())) 
@@ -255,10 +255,10 @@ impl TCAN455xTranceiver {
 
     pub fn configure_bit_timing(&mut self) -> io::Result<()> {
         let fut = async {
-            self.write(&TCAN455xRequest::set_dbtp())?;
-            self.write(&TCAN455xRequest::set_nbtp())?;
-            self.write(&TCAN455xRequest::set_tdcr())?;
-            self.write(&TCAN455xRequest::set_tscc())?;
+            self.write(&TCAN455xController::set_dbtp())?;
+            self.write(&TCAN455xController::set_nbtp())?;
+            self.write(&TCAN455xController::set_tdcr())?;
+            self.write(&TCAN455xController::set_tscc())?;
             Ok(())
         };
         block_on(fut.or(Self::timeout())) 
@@ -267,15 +267,15 @@ impl TCAN455xTranceiver {
     pub fn configure_mram(&mut self) -> io::Result<()> {
     // Following registers cannot change unless Configuration Change Enable (CCE) = HIGH
         let fut = async {
-            self.write(&TCAN455xRequest::set_sidfc())?;
-            self.write(&TCAN455xRequest::set_xidfc())?;
-            self.write(&TCAN455xRequest::set_rxf0c())?;
-            self.write(&TCAN455xRequest::set_rxf1c())?;
-            self.write(&TCAN455xRequest::set_rxbc())?;
-            self.write(&TCAN455xRequest::set_rxesc())?;
-            self.write(&TCAN455xRequest::set_txefc())?;
-            self.write(&TCAN455xRequest::set_txbc())?;
-            self.write(&TCAN455xRequest::set_txesc())?;
+            self.write(&TCAN455xController::set_sidfc())?;
+            self.write(&TCAN455xController::set_xidfc())?;
+            self.write(&TCAN455xController::set_rxf0c())?;
+            self.write(&TCAN455xController::set_rxf1c())?;
+            self.write(&TCAN455xController::set_rxbc())?;
+            self.write(&TCAN455xController::set_rxesc())?;
+            self.write(&TCAN455xController::set_txefc())?;
+            self.write(&TCAN455xController::set_txbc())?;
+            self.write(&TCAN455xController::set_txesc())?;
             Ok(())
         };
         block_on(fut.or(Self::timeout())) 
@@ -283,7 +283,7 @@ impl TCAN455xTranceiver {
 
     pub fn configure_mode_and_pins(&mut self) -> io::Result<()> {
         let fut = async {
-            self.write(&TCAN455xRequest::set_device_modes_and_pins())?;
+            self.write(&TCAN455xController::set_device_modes_and_pins())?;
             Ok(())
         };
         block_on(fut.or(Self::timeout()))
@@ -291,17 +291,17 @@ impl TCAN455xTranceiver {
 
     pub fn configure_mcan_irq(&mut self) -> io::Result<()> {
         let fut = async {
-            self.write(&TCAN455xRequest::set_mcan_ie())?;
-            self.write(&TCAN455xRequest::set_mcan_ile())?;
+            self.write(&TCAN455xController::set_mcan_ie())?;
+            self.write(&TCAN455xController::set_mcan_ile())?;
             Ok(())
         };
         block_on(fut.or(Self::timeout())) 
     }
 
-    pub fn configure_filter(&mut self, sidf: &[SIDFCONFIG], xidf: &[XIDFCONFIG]) -> io::Result<()>{
+    pub fn configure_filter(&mut self, sidf: &[SIDConfig], xidf: &[XIDConfig]) -> io::Result<()>{
         let fut = async {
-            self.write(&TCAN455xRequest::set_sid(sidf))?;
-            self.write(&TCAN455xRequest::set_xid(xidf))?;
+            self.write(&TCAN455xController::set_sid(sidf))?;
+            self.write(&TCAN455xController::set_xid(xidf))?;
             Ok(())
         };
         block_on(fut.or(Self::timeout()))
@@ -321,7 +321,7 @@ impl TCAN455xTranceiver {
                 2 => config_masked | REG_BITS_DEVICE_MODE_DEVICEMODE_SLEEP,
                 _ => config_masked
             };
-            let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_DEV_MODES_AND_PINS, vec![payload]);
+            let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_DEV_MODES_AND_PINS, vec![payload]);
             self.write(&cmd)?;
             Ok(())
         };
@@ -356,7 +356,7 @@ impl TCAN455xTranceiver {
                 Err(_) => return Err(io::ErrorKind::InvalidData.into())
             };
             let payload: u32 = test | REG_BITS_MCAN_TEST_LOOP_BACK;
-            let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_MCAN_TEST, vec![payload]);
+            let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_MCAN_TEST, vec![payload]);
             self.write(&cmd)?;
             Ok(())
         };
@@ -407,7 +407,7 @@ impl TCAN455xTranceiver {
                 const FDF: u32 = 1;
                 const BRS: u32 = 1;
                 
-                let addr: u16 = TCAN455xRequest::get_txdata_start_addr(tx_put_index);
+                let addr: u16 = TCAN455xController::get_txdata_start_addr(tx_put_index);
                 let xid: u32 = (1u32 << 30) |  xid;
                 let header: u32 = (MM << 24) |(EFC << 23) | (FDF << 21) | (BRS << 20) | (dlc << 16);
 
@@ -416,11 +416,11 @@ impl TCAN455xTranceiver {
                 payload.push(header);
                 payload.extend(&byte_array);
 
-                let cmd: Vec<u8> = TCAN455xRequest::get_write_command(addr, payload); 
+                let cmd: Vec<u8> = TCAN455xController::generate_write_command(addr, payload); 
                 self.write(&cmd)?;
 
                 let add_req: u32 = 1 << tx_put_index;
-                let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_MCAN_TXBAR, vec![add_req]); 
+                let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_MCAN_TXBAR, vec![add_req]); 
                 self.write(&cmd)?;
             }
             Ok(())
@@ -455,7 +455,7 @@ impl TCAN455xTranceiver {
 
             if rx_fifo0_new_message | rx_fifo1_new_message {
 
-                let cmd: Vec<u8> = TCAN455xRequest::get_write_command(REG_MCAN_IR, vec![mcan_ir]); 
+                let cmd: Vec<u8> = TCAN455xController::generate_write_command(REG_MCAN_IR, vec![mcan_ir]); 
                 self.write(&cmd)?;
 
                 for ch in 0..2 {
@@ -470,20 +470,20 @@ impl TCAN455xTranceiver {
                         
                         let rx_fifo_overwrapped: bool = rx_fifo_put_index <= rx_fifo_get_index;
                         if !rx_fifo_overwrapped {
-                            let addr: u16 = TCAN455xRequest::get_rxdata_start_addr(ch as u16, rx_fifo_get_index as u16);
+                            let addr: u16 = TCAN455xController::get_rxdata_start_addr(ch as u16, rx_fifo_get_index as u16);
                             let len: u32 =  (RXDATA_BLOCKSIZE[ch] * rx_fifo_unread) / 4;
                             match self.read_bytes(addr, len as u8) {
                                 Ok(vec) => rx_data.extend(vec),
                                 Err(_) => {}
                             };
                         } else {
-                            let addr: u16 = TCAN455xRequest::get_rxdata_start_addr(ch as u16, rx_fifo_get_index as u16);
+                            let addr: u16 = TCAN455xController::get_rxdata_start_addr(ch as u16, rx_fifo_get_index as u16);
                             let len: u32 =  (RXDATA_BLOCKSIZE[ch] * (rx_fifo_unread - rx_fifo_put_index)) / 4;
                             match self.read_bytes(addr, len as u8) {
                                 Ok(vec) => rx_data.extend(vec),
                                 Err(_) => {}
                             };
-                            let addr: u16 = TCAN455xRequest::get_rxdata_start_addr(ch as u16, 0);
+                            let addr: u16 = TCAN455xController::get_rxdata_start_addr(ch as u16, 0);
                             let len: u32 =  (RXDATA_BLOCKSIZE[ch] * (rx_fifo_put_index)) / 4;
                             match self.read_bytes(addr, len as u8) {
                                 Ok(vec) => rx_data.extend(vec),
@@ -498,7 +498,7 @@ impl TCAN455xTranceiver {
                         }
 
                         let rx_fifo_ack_index: u32 = (rx_fifo_put_index + RXDATA_FIFOSIZE[ch] - 1) % RXDATA_FIFOSIZE[ch];
-                        let cmd: Vec<u8> = TCAN455xRequest::get_write_command(RXFIFO_ACK_ADDR[ch], vec![rx_fifo_ack_index]); 
+                        let cmd: Vec<u8> = TCAN455xController::generate_write_command(RXFIFO_ACK_ADDR[ch], vec![rx_fifo_ack_index]); 
                         self.write(&cmd)?;
                     }
                 }

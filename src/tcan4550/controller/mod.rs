@@ -1,13 +1,15 @@
+pub mod configurator;
+
 use std::borrow::Borrow;
 
-pub struct TCAN455xRequest {}
+pub struct TCAN455xController {}
 
-impl TCAN455xRequest {
+impl TCAN455xController {
 
     const WRITE_B_FL: u8 = 0x61;
     const READ_B_FL: u8 = 0x41;
 
-    pub fn get_write_command <T: Borrow<Vec<u32>>> (addr: u16, data: T) -> Vec<u8>{
+    pub(crate) fn generate_write_command <T: Borrow<Vec<u32>>> (addr: u16, data: T) -> Vec<u8>{
         let data = data.borrow();
         let addr: [u8; 2] = addr.to_be_bytes();
         let len: usize = data.len();
@@ -25,7 +27,7 @@ impl TCAN455xRequest {
         payload
     }
 
-    pub fn get_read_command(addr: u16, len: u8) -> Vec<u8>{
+    pub(crate) fn generate_read_command(addr: u16, len: u8) -> Vec<u8>{
         let addr: [u8; 2] = addr.to_be_bytes();
         /* zero padding in order to send sclk for extracting all MISO data*/
         let zero_padder: Vec<u8> = vec![0u8; 4 * len as usize];

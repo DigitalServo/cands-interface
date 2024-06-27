@@ -57,7 +57,7 @@ const MCANIRQ_TSWE: u32 = 0;  //IE[16] TSWE: Timestamp wraparound
 const MCANIRQ_TEFLE: u32 = 0; //IE[15] TEFLE: Tx Event FIFO element lost
 const MCANIRQ_TEFFE: u32 = 0; //IE[14] TEFFE: Tx Event FIFO full
 const MCANIRQ_TEFWE: u32 = 0; //IE[13] TEFWE: Tx Event FIFO watermark reached
-const MCANIRQ_TEFNE: u32 = 0; //IE[12] TEFNE: Tx Event FIFO get_write_command entry
+const MCANIRQ_TEFNE: u32 = 0; //IE[12] TEFNE: Tx Event FIFO generate_write_command entry
 const MCANIRQ_TFEE: u32 = 0;  //IE[11] TFEE: Tx FIFO Empty
 const MCANIRQ_TCFE: u32 = 0;  //IE[10] TCFE: Transmission cancellation finished
 const MCANIRQ_TCE: u32 = 0;   //IE[9] TCE: Transmission completed
@@ -65,16 +65,16 @@ const MCANIRQ_HPME: u32 = 0;  //IE[8] HPME: High priority message
 const MCANIRQ_RF1LE: u32 = 0; //IE[7] RF1LE: Rx FIFO 1 message lost
 const MCANIRQ_RF1FE: u32 = 0; //IE[6] RF1FE: Rx FIFO 1 full
 const MCANIRQ_RF1WE: u32 = 0; //IE[5]  RF1WE: RX FIFO 1 watermark reached
-const MCANIRQ_RF1NE: u32 = 1; //IE[4] RF1NE: Rx FIFO 1 get_write_command message
+const MCANIRQ_RF1NE: u32 = 1; //IE[4] RF1NE: Rx FIFO 1 generate_write_command message
 const MCANIRQ_RF0LE: u32 = 0; //IE[3] RF0LE: Rx FIFO 0 message lost
 const MCANIRQ_RF0FE: u32 = 0; //IE[2] RF0FE: Rx FIFO 0 full
 const MCANIRQ_RF0WE: u32 = 0; //IE[1] RF0WE: Rx FIFO 0 watermark reached
-const MCANIRQ_RF0NE: u32 = 1; //IE[0] RF0NE: Rx FIFO 0 get_write_command message
+const MCANIRQ_RF0NE: u32 = 1; //IE[0] RF0NE: Rx FIFO 0 generate_write_command message
 
 const MCANIRQ_INT1_EN: u32 = 1;
 const MCANIRQ_INT0_EN: u32 = 1;
   
-impl crate::rcan4550_controller::request::TCAN455xRequest {
+impl super::super::TCAN455xController {
     pub fn protect_register(data: u32) -> u32 {
         data & !(REG_BITS_MCAN_CCCR_CSA | REG_BITS_MCAN_CCCR_CSR | REG_BITS_MCAN_CCCR_INIT | REG_BITS_MCAN_CCCR_CCE)
     }
@@ -100,31 +100,31 @@ impl crate::rcan4550_controller::request::TCAN455xRequest {
                 | (CCE << 1)
                 | (INIT << 0);
         let data: u32 = Self::unprotect_register(data);
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_dbtp() -> Vec<u8> {
         let addr: u16 = REG_MCAN_DBTP;
         let data: u32 = DBTP_TDC | DBTP_DSJW | DBTP_DBRPRS | DBTP_DTSEG1 |  DBTP_DTSEG2;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_nbtp() -> Vec<u8> {
         let addr: u16 = REG_MCAN_NBTP;
         let data: u32 = NBTP_NSJW | NBTP_NBPRS | NBTP_NTSEG1 |  NBTP_NTSEG2;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_tdcr() -> Vec<u8> {
         let addr: u16 = REG_MCAN_TDCR;
         let data: u32 = TDCO;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
     
     pub fn set_tscc() -> Vec<u8> {
         let addr: u16 = REG_MCAN_TSCC;
         let data: u32 = REG_BITS_MCAN_TSCC_COUNTER_EXTERNAL;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_mcan_ie() -> Vec<u8> {
@@ -161,14 +161,14 @@ impl crate::rcan4550_controller::request::TCAN455xRequest {
             | (MCANIRQ_RF0WE << 1)
             | (MCANIRQ_RF0NE << 0);
 
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
         
     }
     
     pub fn set_mcan_ile() -> Vec<u8> {
         let addr: u16 = REG_MCAN_ILE;
         let data: u32 = (MCANIRQ_INT1_EN << 1) | (MCANIRQ_INT0_EN << 0);
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
 }

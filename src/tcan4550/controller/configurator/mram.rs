@@ -1,5 +1,5 @@
 use crate::tcan4550::register::*;
-use crate::tcan4550::filter::{SIDFCONFIG, XIDFCONFIG};
+use crate::tcan4550::id_filter::{SIDConfig, XIDConfig};
 
 // MRAM sections
 const MRAM_SECTIONS_NUM: usize = 7;
@@ -43,6 +43,7 @@ pub const MRAMCONFIG_NUMOFELEMENTS_RXBC: u32 = 0;
 pub const MRAMCONFIG_NUMOFELEMENTS_TXEFC: u32 = 3;
 pub const MRAMCONFIG_NUMOFELEMENTS_TXBC: u32 = 10;
 
+#[allow(dead_code)]
 pub const MRAMCONFIG_BYTESPERELEMENT: [u32; MRAM_SECTIONS_NUM] = [
     MRAMCONFIG_BYTESPERELEMENT_SID,
     MRAMCONFIG_BYTESPERELEMENT_XID,
@@ -90,7 +91,9 @@ pub const MRAM_STARTADDR_SID: u16 = MRAM_STARTADDR[0];
 pub const MRAM_STARTADDR_XID: u16 = MRAM_STARTADDR[1];
 pub const MRAM_STARTADDR_RXFIFO0: u16 = MRAM_STARTADDR[2];
 pub const MRAM_STARTADDR_RXFIFO1: u16 = MRAM_STARTADDR[3];
+#[allow(dead_code)]
 pub const MRAM_STARTADDR_RXBC: u16 = MRAM_STARTADDR[4];
+#[allow(dead_code)]
 pub const MRAM_STARTADDR_TXEFC: u16 = MRAM_STARTADDR[5];
 pub const MRAM_STARTADDR_TXBC: u16 = MRAM_STARTADDR[6];
 
@@ -134,69 +137,71 @@ const fn get_mram_start_addrs(offset_addr: [u16; MRAM_SECTIONS_NUM]) -> [u16; MR
 }
 
 // Water interrupt
+#[allow(dead_code)]
 pub const RXFIFO_WM_MAX: u32 = 64;
+#[allow(dead_code)]
 pub const TXEFC_WM_MAX: u32 = 32;
 pub const RXFIFO0_WM: u32 = 0;
 pub const RXFIFO1_WM: u32 = 0;
 pub const TXEFC_WM: u32 = 2;
 
-impl crate::tcan4550::request::TCAN455xRequest {
+impl super::super::TCAN455xController {
     pub fn set_sidfc() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_SIDFC;
         let data: u32 = (MRAMCONFIG_NUMOFELEMENTS_SID << 16) | MRAM_OFFSETADDR_SID as u32;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_xidfc() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_XIDFC;
         let data: u32 = (MRAMCONFIG_NUMOFELEMENTS_XID << 16) | MRAM_OFFSETADDR_XID as u32;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_rxf0c() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_RXF0C;
         let data: u32 = REG_BITS_MCAN_RXF0C_F0OM_OVERWRITE | (RXFIFO0_WM << 24) | (MRAMCONFIG_NUMOFELEMENTS_RXFIFO0 << 16) | MRAM_OFFSETADDR_RXFIFO0 as u32;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_rxf1c() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_RXF1C;
         let data: u32 = REG_BITS_MCAN_RXF0C_F0OM_OVERWRITE | (RXFIFO1_WM << 24) | (MRAMCONFIG_NUMOFELEMENTS_RXFIFO1 << 16) | MRAM_OFFSETADDR_RXFIFO1 as u32;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_rxbc() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_RXBC;
         let data: u32 = MRAM_OFFSETADDR_RXBC as u32;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_rxesc() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_RXESC;
         let data: u32 = (RXBCDATASIZE.code << 8) | (RXFIFO1DATASIZE.code << 4) | (RXFIFO0DATASIZE.code);
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_txefc() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_TXEFC;
         let data: u32 = (TXEFC_WM << 24) | (MRAMCONFIG_NUMOFELEMENTS_TXEFC << 16) | MRAM_OFFSETADDR_TXEFC as u32;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_txbc() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_TXBC;
         let data: u32 = (MRAMCONFIG_NUMOFELEMENTS_TXBC << 24) | (0 << 16) | MRAM_OFFSETADDR_TXBC as u32;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     pub fn set_txesc() -> Vec<u8> {
         let addr: u16 =  REG_MCAN_TXESC;
         let data: u32 = TXFIFODATASIZE.code;
-        Self::get_write_command(addr, vec![data])
+        Self::generate_write_command(addr, vec![data])
     }
 
     // Filter configuration
-    pub fn set_sid(sidf_config: &[SIDFCONFIG]) -> Vec<u8> {
+    pub fn set_sid(sidf_config: &[SIDConfig]) -> Vec<u8> {
         let mut reg_data: Vec<u32> = Vec::new();
         for i in 0..MRAMCONFIG_NUMOFELEMENTS_SID as usize {
             reg_data.push((sidf_config[i].sft << 30) | (sidf_config[i].sfec << 27) | (sidf_config[i].sidf1 << 16) | sidf_config[i].sidf2);
@@ -204,10 +209,10 @@ impl crate::tcan4550::request::TCAN455xRequest {
 
         let addr: u16 =  MRAM_STARTADDR_SID as u16;
         let data: Vec<u32> =  reg_data.to_vec();
-        Self::get_write_command(addr, data)
+        Self::generate_write_command(addr, data)
     }
 
-    pub fn set_xid(xidf_config: &[XIDFCONFIG]) -> Vec<u8> {
+    pub fn set_xid(xidf_config: &[XIDConfig]) -> Vec<u8> {
         let mut reg_data: Vec<u32> = Vec::new();
         for i in 0..MRAMCONFIG_NUMOFELEMENTS_XID as usize {
             reg_data.push((xidf_config[i].efec << 29) | xidf_config[i].eidf1);
@@ -216,7 +221,7 @@ impl crate::tcan4550::request::TCAN455xRequest {
 
         let addr: u16 =  MRAM_STARTADDR_XID as u16;
 
-        Self::get_write_command(addr, reg_data)
+        Self::generate_write_command(addr, reg_data)
     }
 
     pub fn get_txdata_start_addr(put_index: u16) -> u16 {

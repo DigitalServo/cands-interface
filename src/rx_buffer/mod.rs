@@ -1,5 +1,6 @@
 const FIFOSIZE: usize = 1024;
 
+/// Receive data buffer on user space
 #[derive(Debug)]
 pub struct RxData {
     pub fifo0: Vec<u8>,

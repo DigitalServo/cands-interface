@@ -71,6 +71,11 @@ impl TCAN455xTranceiver {
     pub fn reset(&mut self) -> Result<(), Box<dyn std::error::Error>>{
         self.driver.reset_tcan4550().map_err(|e| e.into())
     }
+
+    async fn timeout<T>() -> std::io::Result<T> {
+        Timer::after(Duration::from_millis(500)).await;
+        Err(io::ErrorKind::TimedOut.into())
+    }
     
     pub fn setup(&mut self, sidf: &[SIDConfig], xidf: &[XIDConfig]) -> Result<(), String>{
 
@@ -125,11 +130,6 @@ impl TCAN455xTranceiver {
 
     pub fn close(&mut self) -> io::Result<()> {
         Self::switch_sleep_mode(self)
-    }
-
-    async fn timeout<T>() -> std::io::Result<T> {
-        Timer::after(Duration::from_millis(500)).await;
-        Err(io::ErrorKind::TimedOut.into())
     }
 
     pub fn get_device_id(&mut self) -> io::Result<String>{

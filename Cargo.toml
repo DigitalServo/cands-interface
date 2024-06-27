@@ -3,7 +3,7 @@ name = "cands_interface"
 license = "MIT"
 authors = ["DigitalServo"]
 description = "This is an interface for DigitalServo USB CAN board."
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 
 [features]

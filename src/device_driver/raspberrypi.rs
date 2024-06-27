@@ -10,11 +10,11 @@ type IoResult<T> = Result<T, IoError>;
 
 fn emap() -> impl FnOnce(RaspiError) -> IoError { |err| match err {
     RaspiError::Io(e) => e,
-    RaspiError::BitsPerWordNotSupported(_u8) => IoError::new(IoErrorKind::Other, "BitsPerWordNotSupported"),
-    RaspiError::BitOrderNotSupported(_bit_order) => IoError::new(IoErrorKind::Other, "BitOrderNotSupported"),
-    RaspiError::ClockSpeedNotSupported(_u32) => IoError::new(IoErrorKind::Other, "ClockSpeedNotSupported"),
-    RaspiError::ModeNotSupported(_mode) => IoError::new(IoErrorKind::Other, "ModeNotSupported"),
-    RaspiError::PolarityNotSupported(_polarity) => IoError::new(IoErrorKind::Other, "PolarityNotSupported"),
+    RaspiError::BitsPerWordNotSupported(_u8) => IoError::new(IoErrorKind::Other, "Bits Per Word Not Supported"),
+    RaspiError::BitOrderNotSupported(_bit_order) => IoError::new(IoErrorKind::Other, "Bit Order Not Supported"),
+    RaspiError::ClockSpeedNotSupported(_u32) => IoError::new(IoErrorKind::Other, "Clock Speed Not Supported"),
+    RaspiError::ModeNotSupported(_mode) => IoError::new(IoErrorKind::Other, "Mode Not Supported"),
+    RaspiError::PolarityNotSupported(_polarity) => IoError::new(IoErrorKind::Other, "Polarity Not Supported"),
 } }
 
 use super::{GpioDriver, SpiDriver, TCAN4550Driver, GPI_MAX_POINT};

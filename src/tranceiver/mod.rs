@@ -21,7 +21,7 @@ use crate::rx_buffer::RxData;
 
 /// CAN Tranceiver
 pub struct TCAN455xTranceiver {
-    driver: Box<dyn TCAN4550Driver>
+    driver: Box<dyn TCAN4550Driver + Send>
 }
 
 impl TCAN455xTranceiver {

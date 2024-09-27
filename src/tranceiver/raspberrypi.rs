@@ -18,4 +18,9 @@ impl super::TCAN455xTranceiver {
         }
         ret
     }
+
+    pub fn ws2812_write(&mut self, buffer: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+        self.driver.ws2812_write(buffer)?;
+        Ok(())
+    }
 }

@@ -10,11 +10,25 @@ type IoResult<T> = Result<T, IoError>;
 pub const GPI_MAX_POINT: usize = 64;
 
 #[allow(dead_code)]
-pub(crate) trait SpiDriver {
-    fn spi_write(&mut self, data: &[u8]) -> IoResult<usize>;
-    fn spi_read(&mut self, buffer: &mut [u8]) -> IoResult<usize>;
-    fn spi_transfer(&mut self, data: &[u8], buffer: &mut [u8]) -> IoResult<usize>;
-    fn spi_transfer_in_place(&mut self, data: &mut [u8]) -> IoResult<usize>;
+pub(crate) trait TCAN455xDriver {
+    fn tcan455x_write(&mut self, data: &[u8]) -> IoResult<usize>;
+    fn tcan455x_read(&mut self, buffer: &mut [u8]) -> IoResult<usize>;
+    fn tcan455x_transfer(&mut self, data: &[u8], buffer: &mut [u8]) -> IoResult<usize>;
+    fn tcan455x_transfer_in_place(&mut self, data: &mut [u8]) -> IoResult<usize>;
+    fn tcan455x_reset(&mut self) -> IoResult<()>;
+}
+
+#[allow(dead_code)]
+pub(crate) trait ADCDriver {
+    fn adc_write(&mut self, data: &[u8]) -> IoResult<usize>;
+    fn adc_read(&mut self, buffer: &mut [u8]) -> IoResult<usize>;
+    fn adc_transfer(&mut self, data: &[u8], buffer: &mut [u8]) -> IoResult<usize>;
+    fn adc_transfer_in_place(&mut self, data: &mut [u8]) -> IoResult<usize>;
+}
+
+#[allow(dead_code)]
+pub(crate) trait WS2812Driver {
+    fn ws2812_write(&mut self, data: &[u8]) -> IoResult<usize>;
 }
 
 #[allow(dead_code)]
@@ -25,6 +39,9 @@ pub(crate) trait GpioDriver {
 }
 
 #[allow(dead_code)]
-pub(crate) trait TCAN4550Driver: SpiDriver + GpioDriver {
-    fn reset_tcan4550(&mut self) -> IoResult<()>;
-}
+pub(crate) trait DeviceDriver: TCAN455xDriver {}
+
+#[allow(dead_code)]
+pub(crate) trait RaspiDeviceDriver: TCAN455xDriver + GpioDriver + ADCDriver + WS2812Driver {}
+
+

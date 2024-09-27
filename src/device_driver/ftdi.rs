@@ -33,7 +33,7 @@ fn emap<E: StdError>() -> impl FnOnce(FtdiError<E>) -> IoError { |err| match err
     FtdiError::Backend(e) => IoError::new(IoErrorKind::Other, e.to_string()),
 } }
 
-use super::{GpioDriver, SpiDriver, TCAN4550Driver, GPI_MAX_POINT};
+use super::{GpioDriver, TCAN455xDriver, GPI_MAX_POINT, DeviceDriver};
 
 pub struct FtdiDriver<DEVICE, E>
 where
@@ -65,19 +65,19 @@ where
         Ok(device)
     }
 
-    pub fn new(spi_clk_freq: u32, spi_clk_polarity: u8) -> IoResult<Self> {
+    pub fn new(tcan455xclk_freq: u32, tcan455xclk_polarity: u8) -> IoResult<Self> {
 
         let device: DEVICE = match Self::find_device() {
             Ok(device) => device,
             Err(_) => return Err(IoError::new(IoErrorKind::NotConnected, "Device Not Found."))
         };
 
-        let hal: FtHal<DEVICE> = FtHal::init_freq(device, spi_clk_freq).map_err(emap::<E>())?;
+        let hal: FtHal<DEVICE> = FtHal::init_freq(device, tcan455xclk_freq).map_err(emap::<E>())?;
 
-        const SPI_CS_INDEX: u8 = 3;
-        let spi_clk_polarity: Polarity = if spi_clk_polarity == 0 { Polarity::IdleLow } else {Polarity::IdleHigh};
-        let mut spi: SpiDevice<DEVICE> = hal.spi_device(SPI_CS_INDEX).map_err(emap::<E>())?;
-        spi.set_clock_polarity(spi_clk_polarity);
+        const TCAN455X_CS_INDEX: u8 = 3;
+        let tcan455xclk_polarity: Polarity = if tcan455xclk_polarity == 0 { Polarity::IdleLow } else {Polarity::IdleHigh};
+        let mut spi: SpiDevice<DEVICE> = hal.spi_device(TCAN455X_CS_INDEX).map_err(emap::<E>())?;
+        spi.set_clock_polarity(tcan455xclk_polarity);
         
         let pin_1: OutputPin<DEVICE> = hal.ad4().map_err(emap::<E>())?;
         let pin_2: OutputPin<DEVICE> = hal.ad5().map_err(emap::<E>())?;
@@ -87,33 +87,6 @@ where
         let pins: [OutputPin<DEVICE>; 4] = [pin_1, pin_2, pin_3, pin_4];
 
         Ok(Self { spi, pins })
-    }
-}
-
-impl <DEVICE, E> SpiDriver for FtdiDriver <DEVICE, E>
-where
-    DEVICE: MpsseCmdExecutor<Error = E> + TryFrom<Ftdi>,
-    <DEVICE as TryFrom<Ftdi>>::Error: StdError + 'static,
-    E: StdError,
-    FtdiError<E>: From<E>,
-{
-    fn spi_write(&mut self, data: &[u8]) -> IoResult<usize> {
-        (&self.spi).write(data).map_err(emap::<E>())?;
-        Ok(data.len())
-    }
-
-    fn spi_read(&mut self, _buffer: &mut [u8]) -> IoResult<usize> {
-        Ok(0)
-    }
-
-    fn spi_transfer(&mut self, data: &[u8], buffer: &mut [u8]) -> IoResult<usize> {
-        (&self.spi).transfer(buffer, data).map_err(emap::<E>())?;
-        Ok(data.len())
-    }
-
-    fn spi_transfer_in_place(&mut self, data: &mut [u8]) -> IoResult<usize> {
-        (&self.spi).transfer_in_place(data).map_err(emap::<E>())?;
-        Ok(data.len())
     }
 }
 
@@ -147,14 +120,33 @@ where
 }
 
 
-impl <DEVICE, E> TCAN4550Driver for FtdiDriver <DEVICE, E>
+impl <DEVICE, E> TCAN455xDriver for FtdiDriver <DEVICE, E>
 where
     DEVICE: MpsseCmdExecutor<Error = E> + TryFrom<Ftdi>,
     <DEVICE as TryFrom<Ftdi>>::Error: StdError + 'static,
     E: StdError,
     FtdiError<E>: From<E>,
 {
-    fn reset_tcan4550(&mut self) -> super::IoResult<()> {
+    fn tcan455x_write(&mut self, data: &[u8]) -> IoResult<usize> {
+        (&self.spi).write(data).map_err(emap::<E>())?;
+        Ok(data.len())
+    }
+
+    fn tcan455x_read(&mut self, _buffer: &mut [u8]) -> IoResult<usize> {
+        Ok(0)
+    }
+
+    fn tcan455x_transfer(&mut self, data: &[u8], buffer: &mut [u8]) -> IoResult<usize> {
+        (&self.spi).transfer(buffer, data).map_err(emap::<E>())?;
+        Ok(data.len())
+    }
+
+    fn tcan455x_transfer_in_place(&mut self, data: &mut [u8]) -> IoResult<usize> {
+        (&self.spi).transfer_in_place(data).map_err(emap::<E>())?;
+        Ok(data.len())
+    }
+
+    fn tcan455x_reset(&mut self) -> super::IoResult<()> {
 
         const RESET_WAIT_TIME: u64 = 5;
         
@@ -165,3 +157,12 @@ where
         Ok(())
     }
 }
+
+
+impl <DEVICE, E> DeviceDriver for FtdiDriver <DEVICE, E>
+where
+    DEVICE: MpsseCmdExecutor<Error = E> + TryFrom<Ftdi>,
+    <DEVICE as TryFrom<Ftdi>>::Error: StdError + 'static,
+    E: StdError,
+    FtdiError<E>: From<E>,
+{}

@@ -8,26 +8,31 @@ use std::{io, time::Duration};
 use futures_lite::FutureExt;
 use async_io::{block_on, Timer};
 
-use crate::{
-    device_driver::TCAN4550Driver,
-    tcan4550::{
-        register::*,
-        controller::{TCAN455xController, configurator::mram::*},
-        id_filter::{SIDConfig, XIDConfig},
-    }
+#[cfg(not(feature="raspberrypi"))]
+use crate::device_driver::DeviceDriver;
+
+#[cfg(feature="raspberrypi")]
+use crate::device_driver::RaspiDeviceDriver;
+
+use crate::tcan4550::{
+    controller::{configurator::mram::*, TCAN455xController}, id_filter::{SIDConfig, XIDConfig}, register::*
 };
 
-use crate::rx_buffer::RxData;
+pub mod rx_buffer;
+use rx_buffer::RxData;
 
 /// CAN Tranceiver
 pub struct TCAN455xTranceiver {
-    driver: Box<dyn TCAN4550Driver + Send>
+    #[cfg(not(feature="raspberrypi"))]
+    driver: Box<dyn DeviceDriver + Send>,
+    #[cfg(feature="raspberrypi")]
+    driver: Box<dyn RaspiDeviceDriver + Send>,
 }
 
 impl TCAN455xTranceiver {
 
     pub fn write(&mut self, data: &[u8]) -> io::Result<usize> {
-        match self.driver.spi_write(data) {
+        match self.driver.tcan455x_write(data) {
             Ok(size) => Ok(size),
             Err(_) => Err(io::ErrorKind::ConnectionRefused.into())
         }
@@ -35,7 +40,7 @@ impl TCAN455xTranceiver {
 
     pub fn read(&mut self, addr: u16, len: u8) -> io::Result<Vec<u8>> {
         let mut req: Vec<u8> = TCAN455xController::generate_read_command(addr, len);
-        match self.driver.spi_transfer_in_place(&mut req) {
+        match self.driver.tcan455x_transfer_in_place(&mut req) {
             Ok(_) => Ok(req),
             Err(_) => Err(io::ErrorKind::ConnectionRefused.into())
         }
@@ -69,7 +74,7 @@ impl TCAN455xTranceiver {
     }
 
     pub fn reset(&mut self) -> Result<(), Box<dyn std::error::Error>>{
-        self.driver.reset_tcan4550().map_err(|e| e.into())
+        self.driver.tcan455x_reset().map_err(|e| e.into())
     }
 
     async fn timeout<T>() -> std::io::Result<T> {

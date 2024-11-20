@@ -20,6 +20,7 @@ pub(crate) trait TCAN455xDriver {
 
 #[allow(dead_code)]
 pub(crate) trait ADCDriver {
+    fn adc_reset(&mut self) -> IoResult<()>;
     fn adc_write(&mut self, data: &[u8]) -> IoResult<usize>;
     fn adc_read(&mut self, buffer: &mut [u8]) -> IoResult<usize>;
     fn adc_transfer(&mut self, data: &[u8], buffer: &mut [u8]) -> IoResult<usize>;

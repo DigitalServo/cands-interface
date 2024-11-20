@@ -143,7 +143,7 @@ impl  RaspiIF {
             input_pin_7,
         ];
 
-        Ok(Self { spi0, spi1, spi5, tcan_reset_pin, input_pins })
+        Ok(Self { spi0, spi1, spi5, tcan_reset_pin, adc_reset_pin, input_pins })
     }
 }
 
@@ -201,6 +201,18 @@ impl TCAN455xDriver for RaspiIF {
 }
 
 impl ADCDriver for RaspiIF {
+
+    fn adc_reset(&mut self) -> IoResult<()> {
+
+        const RESET_WAIT_TIME: u64 = 100;
+        
+        self.adc_reset_pin.set_high();
+        std::thread::sleep(std::time::Duration::from_millis(RESET_WAIT_TIME));
+        self.adc_reset_pin.set_low();
+        std::thread::sleep(std::time::Duration::from_millis(RESET_WAIT_TIME));
+        Ok(())
+    }
+
     fn adc_read(&mut self, buffer: &mut [u8]) -> IoResult<usize> {
         self.spi1.read(buffer).map_err(emap())
     }

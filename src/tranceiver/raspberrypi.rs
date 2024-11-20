@@ -23,4 +23,15 @@ impl super::TCAN455xTranceiver {
         self.driver.ws2812_write(buffer)?;
         Ok(())
     }
+
+    pub fn adc_reset(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.driver.adc_reset()?;
+        Ok(())
+    }
+
+    pub fn adc_read(&mut self) -> Result<[u8; 3], Box<dyn std::error::Error>> {
+        let mut buf: [u8; 3] = [0u8; 3];
+        self.driver.adc_read(&mut buf)?;
+        Ok(buf)
+    }
 }

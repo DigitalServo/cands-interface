@@ -20,9 +20,10 @@ fn emap() -> impl FnOnce(RaspiError) -> IoError { |err| match err {
 use super::{GpioDriver, ADCDriver, TCAN455xDriver, WS2812Driver, RaspiDeviceDriver, GPI_MAX_POINT};
 
 const GPIO_RESET_PIN_BCM: u8 = 5;
+const ADC_RESET_PIN_BCM: u8 = 26;
 
 pub const GPIO_INPUT_PIN_NUM: usize = 8;
-const GPIO_INPUT_PIN_BCM: [u8; GPIO_INPUT_PIN_NUM] = [ 3, 2, 18, 4, 27, 17, 22, 23 ];
+const GPIO_INPUT_PIN_BCM: [u8; GPIO_INPUT_PIN_NUM] = [ 3, 2, 18, 4, 27, 17, 22, 23];
 
 /// Mode = 0 -> CPOL: 0, CPHA: 0
 /// Mode = 1 -> CPOL: 0, CPHA: 1
@@ -54,7 +55,8 @@ pub struct RaspiIF {
     pub spi0: Spi,
     pub spi1: Spi,
     pub spi5: Spi,
-    pub reset_pin: OutputPin,
+    pub tcan_reset_pin: OutputPin,
+    pub adc_reset_pin: OutputPin,
     pub input_pins: [InputPin; GPIO_INPUT_PIN_NUM]
 }
 
@@ -78,7 +80,13 @@ impl  RaspiIF {
 
 
         //TCAN455x reset pin
-        let reset_pin: OutputPin = match gpio.get(GPIO_RESET_PIN_BCM) {
+        let tcan_reset_pin: OutputPin = match gpio.get(GPIO_RESET_PIN_BCM) {
+            Ok(x) => x.into_output(),
+            Err(e) => return Err(Box::new(e)),
+        };
+
+        //ADC reset pin
+        let adc_reset_pin: OutputPin = match gpio.get(ADC_RESET_PIN_BCM) {
             Ok(x) => x.into_output(),
             Err(e) => return Err(Box::new(e)),
         };
@@ -109,15 +117,33 @@ impl  RaspiIF {
             Err(e) => return Err(Box::new(e)),
         };
 
+        let input_pin_5: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[5]) {
+            Ok(x) => x.into_input(),
+            Err(e) => return Err(Box::new(e)),
+        };
+
+        let input_pin_6: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[6]) {
+            Ok(x) => x.into_input(),
+            Err(e) => return Err(Box::new(e)),
+        };
+
+        let input_pin_7: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[7]) {
+            Ok(x) => x.into_input(),
+            Err(e) => return Err(Box::new(e)),
+        };
+
         let input_pins: [InputPin; GPIO_INPUT_PIN_NUM] = [
             input_pin_0,
             input_pin_1,
             input_pin_2,
             input_pin_3,
             input_pin_4,
+            input_pin_5,
+            input_pin_6,
+            input_pin_7,
         ];
 
-        Ok(Self { spi0, spi1, spi5, reset_pin, input_pins })
+        Ok(Self { spi0, spi1, spi5, tcan_reset_pin, input_pins })
     }
 }
 
@@ -166,9 +192,9 @@ impl TCAN455xDriver for RaspiIF {
 
         const RESET_WAIT_TIME: u64 = 5;
         
-        self.reset_pin.set_high();
+        self.tcan_reset_pin.set_high();
         std::thread::sleep(std::time::Duration::from_millis(RESET_WAIT_TIME));
-        self.reset_pin.set_low();
+        self.tcan_reset_pin.set_low();
         std::thread::sleep(std::time::Duration::from_millis(RESET_WAIT_TIME));
         Ok(())
     }

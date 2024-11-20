@@ -21,8 +21,8 @@ use super::{GpioDriver, ADCDriver, TCAN455xDriver, WS2812Driver, RaspiDeviceDriv
 
 const GPIO_RESET_PIN_BCM: u8 = 5;
 
-pub const GPIO_INPUT_PIN_NUM: usize = 5;
-const GPIO_INPUT_PIN_BCM: [u8; GPIO_INPUT_PIN_NUM] = [ 3, 2, 4, 23, 17 ];
+pub const GPIO_INPUT_PIN_NUM: usize = 8;
+const GPIO_INPUT_PIN_BCM: [u8; GPIO_INPUT_PIN_NUM] = [ 3, 2, 18, 4, 27, 17, 22, 23 ];
 
 /// Mode = 0 -> CPOL: 0, CPHA: 0
 /// Mode = 1 -> CPOL: 0, CPHA: 1

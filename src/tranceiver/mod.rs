@@ -482,12 +482,14 @@ impl TCAN455xTranceiver {
                                 Err(_) => {}
                             };
                         } else {
-                            let addr: u16 = TCAN455xController::get_rxdata_start_addr(ch as u16, rx_fifo_get_index as u16);
-                            let len: u32 =  (RXDATA_BLOCKSIZE[ch] * (rx_fifo_unread - rx_fifo_put_index)) / 4;
-                            match self.read_bytes(addr, len as u8) {
-                                Ok(vec) => rx_data.extend(vec),
-                                Err(_) => {}
-                            };
+                            if rx_fifo_unread >= rx_fifo_put_index {
+                                let addr: u16 = TCAN455xController::get_rxdata_start_addr(ch as u16, rx_fifo_get_index as u16);
+                                let len: u32 =  (RXDATA_BLOCKSIZE[ch] * (rx_fifo_unread - rx_fifo_put_index)) / 4;
+                                match self.read_bytes(addr, len as u8) {
+                                    Ok(vec) => rx_data.extend(vec),
+                                    Err(_) => {}
+                                };
+                            }
                             let addr: u16 = TCAN455xController::get_rxdata_start_addr(ch as u16, 0);
                             let len: u32 =  (RXDATA_BLOCKSIZE[ch] * (rx_fifo_put_index)) / 4;
                             match self.read_bytes(addr, len as u8) {

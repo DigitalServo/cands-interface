@@ -46,7 +46,7 @@ checksum = "ed570934406eb16438a4e976b1b4500774099c13b8cb96eec99f620f05090ddf"
 
 [[package]]
 name = "cands_interface"
-version = "0.1.11"
+version = "0.1.12"
 dependencies = [
  "async-io",
  "ftdi-embedded-hal",
@@ -140,9 +140,9 @@ checksum = "25cbce373ec4653f1a01a31e8a5e5ec0c622dc27ff9c4e6606eefef5cbbed4a5"
 
 [[package]]
 name = "ftdi-embedded-hal"
-version = "0.22.0"
+version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e328c2738c104e2649586bda4baabf376825db50014eb0d41bee74fb6064deb"
+checksum = "bb728129c36aed034183aefd25d3f5526cc9be16d1ce5bb66b663fd01fcc8ff8"
 dependencies = [
  "embedded-hal 0.2.7",
  "embedded-hal 1.0.0",
@@ -175,9 +175,9 @@ checksum = "a44623e20b9681a318efdd71c299b6b222ed6f231972bfe2f224ebad6311f0c1"
 
 [[package]]
 name = "futures-lite"
-version = "2.5.0"
+version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cef40d21ae2c515b51041df9ed313ed21e572df340ea58a922a0aefe7e8891a1"
+checksum = "f5edaec856126859abb19ed65f39e90fea3a9574b9707f13539acf4abf7eb532"
 dependencies = [
  "fastrand",
  "futures-core",
@@ -194,9 +194,9 @@ checksum = "9c198f91728a82281a64e1f4f9eeb25d82cb32a5de251c6bd1b5154d63a8e7bd"
 
 [[package]]
 name = "libftd2xx"
-version = "0.32.4"
+version = "0.33.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e829111cbb52875fab26bad8e73769507bccefcb53b268f66c44e18fb295b302"
+checksum = "e09fe202b49276fc72160c27c8af5ff34e6ee3db78625bbfe3bd9c2b2e595af6"
 dependencies = [
  "ftdi-mpsse",
  "libftd2xx-ffi",
@@ -275,9 +275,9 @@ dependencies = [
 
 [[package]]
 name = "rppal"
-version = "0.19.0"
+version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b37e992f3222e304708025de77c9e395068a347449d0d7164f52d3beccdbd8d"
+checksum = "c1ce3b019009cff02cb6b0e96e7cc2e5c5b90187dc1a490f8ef1521d0596b026"
 dependencies = [
  "libc",
 ]

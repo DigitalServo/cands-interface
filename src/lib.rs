@@ -10,4 +10,7 @@ pub use tranceiver::TCAN455xTranceiver;
 #[cfg(feature="raspberrypi")]
 pub use device_driver::raspberrypi::GPIO_INPUT_PIN_NUM;
 
+#[cfg(feature="raspberrypi")]
+pub use device_driver::raspberrypi::GPIO_OUTPUT_PIN_NUM;
+
 pub use tranceiver::rx_buffer::RxData;

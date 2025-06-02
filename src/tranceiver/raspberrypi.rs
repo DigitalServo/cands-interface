@@ -6,6 +6,10 @@ impl super::TCAN455xTranceiver {
         Ok(Self { driver: Box::new(driver) })
     }
 
+    pub fn gpo_write(&mut self, state: u8) {
+        self.driver.gpio_out(state).unwrap()
+    }
+
     pub fn gpi_read(&mut self, channel: usize) -> bool {
         self.driver.gpio_read(channel).unwrap()
     }

@@ -27,7 +27,7 @@ pub const GPIO_INPUT_PIN_NUM: usize = 7;
 pub const GPIO_OUTPUT_PIN_NUM: usize = 1;
 
 const GPIO_INPUT_PIN_BCM: [u8; GPIO_INPUT_PIN_NUM] = [3, 2, 18, 4, 27, 17, 22];
-const GPIO_INPUT_PIN_BCM: [u8; GPIO_OUTPUT_PIN_NUM] = [23];
+const GPIO_OUTPUT_PIN_BCM: [u8; GPIO_OUTPUT_PIN_NUM] = [23];
 
 /// Mode = 0 -> CPOL: 0, CPHA: 0
 /// Mode = 1 -> CPOL: 0, CPHA: 1
@@ -112,22 +112,22 @@ impl  RaspiIF {
             Err(e) => return Err(Box::new(e)),
         };
 
-        let input_pin_3: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[4]) {
+        let input_pin_3: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[3]) {
             Ok(x) => x.into_input(),
             Err(e) => return Err(Box::new(e)),
         };
 
-        let input_pin_4: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[5]) {
+        let input_pin_4: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[4]) {
             Ok(x) => x.into_input(),
             Err(e) => return Err(Box::new(e)),
         };
 
-        let input_pin_5: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[6]) {
+        let input_pin_5: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[5]) {
             Ok(x) => x.into_input(),
             Err(e) => return Err(Box::new(e)),
         };
 
-        let input_pin_6: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[7]) {
+        let input_pin_6: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[6]) {
             Ok(x) => x.into_input(),
             Err(e) => return Err(Box::new(e)),
         };
@@ -143,25 +143,28 @@ impl  RaspiIF {
         ];
 
         // Output pin
-        let output_pin_0: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[3]) {
-            Ok(x) => x.into_input(),
+        let output_pin_0: OutputPin = match gpio.get(GPIO_OUTPUT_PIN_BCM[0]) {
+            Ok(x) => x.into_output(),
             Err(e) => return Err(Box::new(e)),
         };
 
-        let output_pins: [InputPin; GPIO_OUTPUT_PIN_NUM] = [
+        let output_pins: [OutputPin; GPIO_OUTPUT_PIN_NUM] = [
             output_pin_0,
         ];
 
-        Ok(Self { spi0, spi1, spi5, tcan_reset_pin, adc_reset_pin, input_pins })
+        Ok(Self { spi0, spi1, spi5, tcan_reset_pin, adc_reset_pin, input_pins, output_pins })
     }
 }
 
 impl GpioDriver for RaspiIF {
-    fn gpio_out(&mut self, channel: usize, state: bool) -> IoResult<()> {
-        match state {
-            true => self.output_pins[channel].set_high(),
-            false => self.output_pins[channel].set_low(),
-        };
+    fn gpio_out(&mut self, state: u8) -> IoResult<()> {
+        for i in 0..GPIO_OUTPUT_PIN_NUM {
+            if state & (0x01 << i) == 1 {
+                self.output_pins[i].set_high();
+            } else {
+                self.output_pins[i].set_low();
+            }
+        }
         Ok(())
     }
 

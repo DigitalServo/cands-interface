@@ -1,9 +1,13 @@
-use crate::device_driver::raspberrypi_cm::{RaspiIF, GPIO_INPUT_PIN_NUM};
+use crate::device_driver::raspberrypi::{RaspiIF, GPIO_INPUT_PIN_NUM};
 
 impl super::TCAN455xTranceiver {
     pub fn new () -> Result<Self, Box<dyn std::error::Error>> {
         let driver: RaspiIF = RaspiIF::new()?;
         Ok(Self { driver: Box::new(driver) })
+    }
+
+    pub fn gpo_write(&mut self, state: u8) {
+        self.driver.gpio_out(state).unwrap()
     }
 
     pub fn gpi_read(&mut self, channel: usize) -> bool {

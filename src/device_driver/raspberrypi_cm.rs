@@ -117,7 +117,7 @@ impl  RaspiIF {
 impl GpioDriver for RaspiIF {
     fn gpio_out(&mut self, state: u8) -> IoResult<()> {
         for i in 0..GPIO_OUTPUT_PIN_NUM {
-            if state & (0x01 << i) == 1 {
+            if (state & (0x01 << i)) != 0 {
                 self.output_pins[i].set_high();
             } else {
                 self.output_pins[i].set_low();

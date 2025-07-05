@@ -1,4 +1,4 @@
-use crate::device_driver::raspberrypi::{RaspiIF, GPIO_INPUT_PIN_NUM};
+use crate::device_driver::raspberrypi_cm::{RaspiIF, GPIO_INPUT_PIN_NUM};
 
 impl super::TCAN455xTranceiver {
     pub fn new () -> Result<Self, Box<dyn std::error::Error>> {

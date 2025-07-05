@@ -27,7 +27,7 @@ pub const GPIO_INPUT_PIN_NUM: usize = 10;
 pub const GPIO_OUTPUT_PIN_NUM: usize = 2;
 
 const GPIO_INPUT_PIN_BCM: [u8; GPIO_INPUT_PIN_NUM] = [15, 24, 2, 3, 4, 17, 27, 22, 25, 7];
-const GPIO_INPUT_PIN_BCM: [u8; GPIO_OUTPUT_PIN_NUM] = [23, 18];
+const GPIO_OUTPUT_PIN_BCM: [u8; GPIO_OUTPUT_PIN_NUM] = [23, 18];
 
 /// Mode = 0 -> CPOL: 0, CPHA: 0
 /// Mode = 1 -> CPOL: 0, CPHA: 1
@@ -85,71 +85,29 @@ impl  RaspiIF {
 
 
         //TCAN455x reset pin
-        let tcan_reset_pin: OutputPin = match gpio.get(GPIO_RESET_PIN_BCM) {
-            Ok(x) => x.into_output(),
-            Err(e) => return Err(Box::new(e)),
-        };
+        let tcan_reset_pin: OutputPin = gpio.get(GPIO_RESET_PIN_BCM).map(|x| x.into_output()).map_err(|e| Box::new(e))?;
 
         //ADC reset pin
-        let adc_reset_pin: OutputPin = match gpio.get(ADC_RESET_PIN_BCM) {
-            Ok(x) => x.into_output(),
-            Err(e) => return Err(Box::new(e)),
-        };
+        let adc_reset_pin: OutputPin = gpio.get(ADC_RESET_PIN_BCM).map(|x| x.into_output()).map_err(|e| Box::new(e))?;
 
         //Input pins
-        let input_pin_0: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[0]) {
-            Ok(x) => x.into_input(),
-            Err(e) => return Err(Box::new(e)),
-        };
-
-        let input_pin_1: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[1]) {
-            Ok(x) => x.into_input(),
-            Err(e) => return Err(Box::new(e)),
-        };
-
-        let input_pin_2: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[2]) {
-            Ok(x) => x.into_input(),
-            Err(e) => return Err(Box::new(e)),
-        };
-
-        let input_pin_3: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[3]) {
-            Ok(x) => x.into_input(),
-            Err(e) => return Err(Box::new(e)),
-        };
-
-        let input_pin_4: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[4]) {
-            Ok(x) => x.into_input(),
-            Err(e) => return Err(Box::new(e)),
-        };
-
-        let input_pin_5: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[5]) {
-            Ok(x) => x.into_input(),
-            Err(e) => return Err(Box::new(e)),
-        };
-
-        let input_pin_6: InputPin = match gpio.get(GPIO_INPUT_PIN_BCM[6]) {
-            Ok(x) => x.into_input(),
-            Err(e) => return Err(Box::new(e)),
-        };
-
         let input_pins: [InputPin; GPIO_INPUT_PIN_NUM] = [
-            input_pin_0,
-            input_pin_1,
-            input_pin_2,
-            input_pin_3,
-            input_pin_4,
-            input_pin_5,
-            input_pin_6,
+            gpio.get(GPIO_INPUT_PIN_BCM[0]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[1]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[2]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[3]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[4]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[5]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[6]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[7]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[8]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_INPUT_PIN_BCM[9]).map(|x| x.into_input()).map_err(|e| Box::new(e))?,
         ];
 
-        // Output pin
-        let output_pin_0: OutputPin = match gpio.get(GPIO_OUTPUT_PIN_BCM[0]) {
-            Ok(x) => x.into_output(),
-            Err(e) => return Err(Box::new(e)),
-        };
-
+        //Output pins
         let output_pins: [OutputPin; GPIO_OUTPUT_PIN_NUM] = [
-            output_pin_0,
+            gpio.get(GPIO_OUTPUT_PIN_BCM[0]).map(|x| x.into_output()).map_err(|e| Box::new(e))?,
+            gpio.get(GPIO_OUTPUT_PIN_BCM[1]).map(|x| x.into_output()).map_err(|e| Box::new(e))?,
         ];
 
         Ok(Self { spi0, spi1, spi5, tcan_reset_pin, adc_reset_pin, input_pins, output_pins })

@@ -9,9 +9,10 @@ edition = "2021"
 [features]
 usb-ftdi = ["ftdi-embedded-hal"]
 raspberrypi = ["rppal"]
+raspberrypi_cm = ["rppal"]
 
 [dependencies]
-async-io = "2.4.0"
+async-io = "2.4.1"
 futures-lite = "2.6.0"
-ftdi-embedded-hal = {version= "0.22.1", features = ["libftd2xx", "libftd2xx-static"], optional = true}
+ftdi-embedded-hal = {version= "0.23.2", features = ["libftd2xx", "libftd2xx-static"], optional = true}
 rppal = {version = "0.22.1", optional = true}

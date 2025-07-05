@@ -4,6 +4,9 @@ pub mod ftdi;
 #[cfg(feature="raspberrypi")]
 pub mod raspberrypi;
 
+#[cfg(feature="raspberrypi_cm")]
+pub mod raspberrypi_cm;
+
 use std::io::Error as IoError;
 type IoResult<T> = Result<T, IoError>;
 

@@ -4,14 +4,17 @@ pub mod usb_ftdi;
 #[cfg(feature="raspberrypi")]
 pub mod raspberrypi;
 
+#[cfg(feature="raspberrypi_cm")]
+pub mod raspberrypi_cm;
+
 use std::{io, time::Duration};
 use futures_lite::FutureExt;
 use async_io::{block_on, Timer};
 
-#[cfg(not(feature="raspberrypi"))]
+#[cfg(not(any(feature="raspberrypi", feature="raspberrypi_cm")))]
 use crate::device_driver::DeviceDriver;
 
-#[cfg(feature="raspberrypi")]
+#[cfg(any(feature="raspberrypi", feature="raspberrypi_cm"))]
 use crate::device_driver::RaspiDeviceDriver;
 
 use crate::tcan4550::{
@@ -23,9 +26,9 @@ use rx_buffer::RxData;
 
 /// CAN Tranceiver
 pub struct TCAN455xTranceiver {
-    #[cfg(not(feature="raspberrypi"))]
+    #[cfg(not(any(feature="raspberrypi", feature="raspberrypi_cm")))]
     driver: Box<dyn DeviceDriver + Send>,
-    #[cfg(feature="raspberrypi")]
+    #[cfg(any(feature="raspberrypi", feature="raspberrypi_cm"))]
     driver: Box<dyn RaspiDeviceDriver + Send>,
 }
 

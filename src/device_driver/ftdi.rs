@@ -128,7 +128,7 @@ where
     FtdiError<E>: From<E>,
 {
     fn tcan455x_write(&mut self, data: &[u8]) -> IoResult<usize> {
-        (&self.spi).write(data).map_err(emap::<E>())?;
+        (&mut self.spi).write(data).map_err(emap::<E>())?;
         Ok(data.len())
     }
 
@@ -137,12 +137,12 @@ where
     }
 
     fn tcan455x_transfer(&mut self, data: &[u8], buffer: &mut [u8]) -> IoResult<usize> {
-        (&self.spi).transfer(buffer, data).map_err(emap::<E>())?;
+        (&mut self.spi).transfer(buffer, data).map_err(emap::<E>())?;
         Ok(data.len())
     }
 
     fn tcan455x_transfer_in_place(&mut self, data: &mut [u8]) -> IoResult<usize> {
-        (&self.spi).transfer_in_place(data).map_err(emap::<E>())?;
+        (&mut self.spi).transfer_in_place(data).map_err(emap::<E>())?;
         Ok(data.len())
     }
 
